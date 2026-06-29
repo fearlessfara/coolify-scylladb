@@ -53,17 +53,18 @@ services:
       - traefik.http.services.scylla-alternator.loadbalancer.healthcheck.interval=30s
 
   scylla-bootstrap:
-    image: scylladb/scylla:latest
+    build: ./bootstrap
     depends_on:
       scylla:
         condition: service_healthy
     volumes:
       - scylla-data:/var/lib/scylla
       - admin-secrets:/secrets
-      - ./bootstrap:/bootstrap:ro
     environment:
       - SCYLLA_CQL_PASSWORD=${SCYLLA_CQL_PASSWORD:-}
-    entrypoint: ["/bin/bash", "/bootstrap/cql-password.sh"]
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - "set -euo pipefail; source /bootstrap/cql-password.sh"
     restart: "no"
 
   scylla-admin:
