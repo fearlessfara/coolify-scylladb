@@ -222,13 +222,12 @@ A self-hosted admin console (`scylla-admin` service) provides a web UI for manag
 
 ### Setup
 
-1. **DNS** — create an **A** (or **AAAA**) record for `ADMIN_UI_HOST` (e.g. `admin.dynamodb.example.com`) pointing to your Coolify server.
+1. **Domain in Coolify** — open the `scylla-admin` service in Coolify and assign a domain (Coolify generates the Traefik labels automatically). The auto-generated `sslip.io` URL works over **HTTP**; use the `http://` link Coolify shows, or assign a custom domain (e.g. `admin.dynamodb.example.com`) with DNS pointing at your server for HTTPS + Let's Encrypt.
 
 2. **Environment variables** in Coolify or `.env`:
 
    | Variable | Purpose |
    |----------|---------|
-   | `ADMIN_UI_HOST` | Public hostname for the admin UI |
    | `ADMIN_USERNAME` | UI login username |
    | `ADMIN_PASSWORD` | UI login password (plain text; hashed inside the container at startup) |
 
@@ -260,7 +259,7 @@ A self-hosted admin console (`scylla-admin` service) provides a web UI for manag
 
 ### Security
 
-> **Important:** The admin UI container holds **CQL superuser access** (auto-provisioned or from `admin-secrets`). Anyone who can log into the UI has full cluster access. Treat `ADMIN_UI_HOST` as a sensitive admin endpoint.
+> **Important:** The admin UI container holds **CQL superuser access** (auto-provisioned or from `admin-secrets`). Anyone who can log into the UI has full cluster access. Restrict the admin URL (custom domain + firewall, or Coolify access controls).
 
 - UI sessions use httpOnly, Secure, SameSite=Strict JWT cookies.
 - Login is rate-limited; Helmet security headers are enabled.

@@ -97,13 +97,15 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.scylla-admin.rule=Host(`${ADMIN_UI_HOST}`)
-      - traefik.http.routers.scylla-admin.entrypoints=https
-      - traefik.http.routers.scylla-admin.tls=true
-      - traefik.http.routers.scylla-admin.tls.certresolver=letsencrypt
-      - traefik.http.services.scylla-admin.loadbalancer.server.port=3000
+    # Routing: assign the admin UI domain in Coolify (Generates Traefik labels).
+    # For self-managed compose only, uncomment and set ADMIN_UI_HOST in .env:
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.http.routers.scylla-admin.rule=Host(`${ADMIN_UI_HOST}`)
+    #   - traefik.http.routers.scylla-admin.entrypoints=https
+    #   - traefik.http.routers.scylla-admin.tls=true
+    #   - traefik.http.routers.scylla-admin.tls.certresolver=letsencrypt
+    #   - traefik.http.services.scylla-admin.loadbalancer.server.port=3000
 
 volumes:
   scylla-data:
