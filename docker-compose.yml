@@ -54,6 +54,7 @@ services:
 
   scylla-bootstrap:
     build: ./bootstrap
+    user: "0:0"
     depends_on:
       scylla:
         condition: service_healthy
