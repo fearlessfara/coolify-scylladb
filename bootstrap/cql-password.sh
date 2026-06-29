@@ -13,12 +13,10 @@ if [ -s "$SECRET_FILE" ]; then
 fi
 
 mkdir -p /secrets
-chmod 700 /secrets
 
 if [ -n "${SCYLLA_CQL_PASSWORD:-}" ]; then
   echo "Persisting SCYLLA_CQL_PASSWORD from environment."
   printf '%s' "$SCYLLA_CQL_PASSWORD" > "$SECRET_FILE"
-  chmod 600 "$SECRET_FILE"
   exit 0
 fi
 
@@ -40,5 +38,4 @@ cqlsh "$CQL_SOCKET" -e \
   "CREATE ROLE cassandra WITH PASSWORD = '${ESCAPED_PASS}' AND SUPERUSER = true AND LOGIN = true;"
 
 printf '%s' "$PASS" > "$SECRET_FILE"
-chmod 600 "$SECRET_FILE"
 echo "Created cassandra superuser and saved password to ${SECRET_FILE}."
