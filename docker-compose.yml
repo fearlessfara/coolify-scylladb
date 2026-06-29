@@ -1,0 +1,36 @@
+# ScyllaDB with Alternator (DynamoDB-compatible API) for Coolify + Traefik.
+# Set SCYLLA_HOST in .env to your public hostname before deploying.
+
+services:
+  scylla:
+    image: scylladb/scylla:latest
+    container_name: scylla-alternator
+    restart: unless-stopped
+    command:
+      - --smp
+      - "1"
+      - --memory
+      - "2G"
+      - --overprovisioned
+      - "1"
+      - --alternator-port
+      - "8000"
+      - --alternator-write-isolation
+      - always
+      - --alternator-enforce-authorization
+      - "false"
+    volumes:
+      - scylla-data:/var/lib/scylla
+    expose:
+      - "8000" # Alternator (DynamoDB API) — routed via Traefik
+      - "9042" # CQL — internal only, not exposed via Traefik
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.scylla-alternator.rule=Host(`${SCYLLA_HOST}`)
+      - traefik.http.routers.scylla-alternator.entrypoints=https
+      - traefik.http.routers.scylla-alternator.tls=true
+      - traefik.http.routers.scylla-alternator.tls.certresolver=letsencrypt
+      - traefik.http.services.scylla-alternator.loadbalancer.server.port=8000
+
+volumes:
+  scylla-data:
