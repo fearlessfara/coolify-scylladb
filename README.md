@@ -25,7 +25,9 @@ Alternator is exposed over **HTTPS** through Coolify's built-in Traefik reverse 
 
 2. Set `SCYLLA_HOST` to your public hostname (e.g. `dynamodb.example.com`).
 
-3. Deploy in Coolify as a **Docker Compose** resource, or run locally:
+3. Optionally configure Alternator auth in `.env` (see [Authentication](#authentication) below).
+
+4. Deploy in Coolify as a **Docker Compose** resource, or run locally:
 
    ```bash
    docker compose up -d
@@ -37,6 +39,8 @@ Alternator is exposed over **HTTPS** through Coolify's built-in Traefik reverse 
 
 2. **Set environment variables** in the Coolify UI (or via `.env`):
    - `SCYLLA_HOST` — must match the hostname clients use (e.g. `dynamodb.example.com`).
+   - `ALTERNATOR_AUTH_ENABLED` — `false` by default; set `true` to enforce auth.
+   - `ALTERNATOR_AUTH_WARN` — `false` by default; set `true` to log would-be auth failures.
 
 3. **DNS** — create an **A** (or **AAAA**) record for `SCYLLA_HOST` pointing to your Coolify server's public IP.
 
@@ -79,9 +83,26 @@ Replace `https://dynamodb.example.com` with `https://<SCYLLA_HOST>`.
 
 Other AWS SDKs (Python `boto3`, Go, Java, etc.) work the same way: set a custom `endpoint` and use dummy credentials unless you enable Alternator authorization.
 
+## Authentication
+
+Controlled via environment variables (both default to `false`):
+
+| Variable | Default | Effect |
+|----------|---------|--------|
+| `ALTERNATOR_AUTH_ENABLED` | `false` | When `true`, unsigned or invalid requests are rejected |
+| `ALTERNATOR_AUTH_WARN` | `false` | When `true`, logs and metrics count auth failures without blocking |
+
+**Rollout:**
+
+1. **Disabled (default)** — any credentials work; suitable for initial setup.
+2. **Warn** — set `ALTERNATOR_AUTH_WARN=true`, keep `ALTERNATOR_AUTH_ENABLED=false`. Watch logs for `alternator_enforce_authorization=true` and metrics `scylla_alternator_authentication_failures` / `scylla_alternator_authorization_failures`.
+3. **Enforced** — create CQL roles and `GRANT` permissions, then set `ALTERNATOR_AUTH_ENABLED=true`. Clients must use a CQL role name as `accessKeyId` and its `salted_hash` from `system_auth.roles` as `secretAccessKey`.
+
+Redeploy after changing either variable (Scylla reads these at container start).
+
 ## Security notes
 
-- **Authorization is off by default** (`--alternator-enforce-authorization false`). Anyone who can reach the HTTPS endpoint can read and write data. For anything beyond local development, enable authorization and configure real credentials, or restrict access (VPN, firewall, Coolify network policies).
+- **Authorization is off by default** (`ALTERNATOR_AUTH_ENABLED=false`). Anyone who can reach the HTTPS endpoint can read and write data until you enable auth and configure CQL roles.
 
 - **CQL port 9042 is not exposed via Traefik** and has no host `ports:` mapping. It is only reachable from other containers on the same Docker network.
 
@@ -110,7 +131,7 @@ Other AWS SDKs (Python `boto3`, Go, Java, etc.) work the same way: set a custom 
 | File | Purpose |
 |------|---------|
 | `docker-compose.yml` | ScyllaDB service, Traefik labels, data volume |
-| `.env.example` | Template for `SCYLLA_HOST` |
+| `.env.example` | Template for `SCYLLA_HOST` and auth settings |
 | `README.md` | This document |
 
 ## License

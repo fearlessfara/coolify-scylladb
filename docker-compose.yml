@@ -18,7 +18,9 @@ services:
       - --alternator-write-isolation
       - always
       - --alternator-enforce-authorization
-      - "false"
+      - ${ALTERNATOR_AUTH_ENABLED:-false}
+      - --alternator-warn-authorization
+      - ${ALTERNATOR_AUTH_WARN:-false}
     volumes:
       - scylla-data:/var/lib/scylla
     expose:
