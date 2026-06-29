@@ -56,7 +56,7 @@ Alternator is exposed over **HTTPS** through Coolify's built-in Traefik reverse 
    https://<SCYLLA_HOST>/
    ```
 
-The compose file includes a Docker health check (`GET http://127.0.0.1:8000/`) so Coolify and Traefik wait until Alternator is ready before routing traffic.
+The compose file includes a Docker health check (`GET http://127.0.0.1:8000/`) so Coolify and Traefik wait until Alternator is ready. Alternator is started with `--alternator-address 0.0.0.0` so it listens on localhost inside the container (required for the health check).
 
 ## Connect with AWS SDK v3 (Node.js)
 
