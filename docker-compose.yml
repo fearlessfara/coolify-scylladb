@@ -21,11 +21,23 @@ services:
       - ${ALTERNATOR_AUTH_ENABLED:-false}
       - --alternator-warn-authorization
       - ${ALTERNATOR_AUTH_WARN:-false}
+      # CQL auth — required to create Alternator users (roles stored in scylla-data volume)
+      - --authenticator
+      - PasswordAuthenticator
+      - --authorizer
+      - CassandraAuthorizer
     volumes:
       - scylla-data:/var/lib/scylla
     expose:
       - "8000" # Alternator (DynamoDB API) — routed via Traefik
       - "9042" # CQL — internal only, not exposed via Traefik
+    healthcheck:
+      # Alternator unauthenticated GET / returns "healthy: <host>:8000"
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8000/ | grep -q '^healthy:'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
     labels:
       - traefik.enable=true
       - traefik.http.routers.scylla-alternator.rule=Host(`${SCYLLA_HOST}`)
@@ -33,6 +45,10 @@ services:
       - traefik.http.routers.scylla-alternator.tls=true
       - traefik.http.routers.scylla-alternator.tls.certresolver=letsencrypt
       - traefik.http.services.scylla-alternator.loadbalancer.server.port=8000
+      - traefik.http.services.scylla-alternator.loadbalancer.healthcheck.path=/
+      - traefik.http.services.scylla-alternator.loadbalancer.healthcheck.port=8000
+      - traefik.http.services.scylla-alternator.loadbalancer.healthcheck.scheme=http
+      - traefik.http.services.scylla-alternator.loadbalancer.healthcheck.interval=30s
 
 volumes:
   scylla-data:

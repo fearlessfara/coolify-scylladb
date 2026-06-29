@@ -56,6 +56,8 @@ Alternator is exposed over **HTTPS** through Coolify's built-in Traefik reverse 
    https://<SCYLLA_HOST>/
    ```
 
+The compose file includes a Docker health check (`GET http://127.0.0.1:8000/`) so Coolify and Traefik wait until Alternator is ready before routing traffic.
+
 ## Connect with AWS SDK v3 (Node.js)
 
 Alternator accepts any credentials when authorization is disabled (the default in this compose file). Install the client:
@@ -96,9 +98,116 @@ Controlled via environment variables (both default to `false`):
 
 1. **Disabled (default)** — any credentials work; suitable for initial setup.
 2. **Warn** — set `ALTERNATOR_AUTH_WARN=true`, keep `ALTERNATOR_AUTH_ENABLED=false`. Watch logs for `alternator_enforce_authorization=true` and metrics `scylla_alternator_authentication_failures` / `scylla_alternator_authorization_failures`.
-3. **Enforced** — create CQL roles and `GRANT` permissions, then set `ALTERNATOR_AUTH_ENABLED=true`. Clients must use a CQL role name as `accessKeyId` and its `salted_hash` from `system_auth.roles` as `secretAccessKey`.
+3. **Enforced** — create CQL roles and `GRANT` permissions (see [Managing Alternator users](#managing-alternator-users)), then set `ALTERNATOR_AUTH_ENABLED=true`. Clients must use a CQL role name as `accessKeyId` and its `salted_hash` from `system.roles` as `secretAccessKey`.
 
 Redeploy after changing either variable (Scylla reads these at container start).
+
+The compose file also enables CQL `PasswordAuthenticator` / `CassandraAuthorizer` so roles persist in the `scylla-data` volume across redeploys.
+
+## Managing Alternator users
+
+Alternator credentials are **CQL roles**. The AWS access key ID is the role name; the secret access key is the role's `salted_hash` (not the plain-text CQL password).
+
+CQL port `9042` is not public. Manage users by SSH on the Coolify worker and running `cqlsh` inside the Scylla container.
+
+### 1. SSH to the worker
+
+```bash
+ssh -i /path/to/your-worker.key ubuntu@<worker-ip>
+```
+
+Example: `worker-2` at `130.110.9.205` with key `oracle-worker-2.key`.
+
+### 2. Find the Scylla container
+
+```bash
+sudo docker ps --format '{{.Names}}\t{{.Image}}' | grep scylla
+```
+
+### 3. Create a role
+
+**First user (empty cluster)** — use the maintenance socket (no CQL password required):
+
+```bash
+CONTAINER=<scylla-container-name>
+PASS='choose-a-strong-password'
+
+sudo docker exec "$CONTAINER" cqlsh /var/lib/scylla/cql.m -e \
+  "CREATE ROLE cassandra WITH PASSWORD = '$PASS' AND SUPERUSER = true AND LOGIN = true;"
+
+sudo docker exec "$CONTAINER" cqlsh /var/lib/scylla/cql.m -e \
+  "CREATE ROLE myapp WITH PASSWORD = '$PASS' AND LOGIN = true;"
+
+sudo docker exec "$CONTAINER" cqlsh /var/lib/scylla/cql.m -e \
+  "GRANT ALL ON ALL KEYSPACES TO myapp;"
+```
+
+**Additional users** — log in as an admin role:
+
+```bash
+ADMIN_PASS='your-cassandra-password'
+
+sudo docker exec "$CONTAINER" cqlsh -u cassandra -p "$ADMIN_PASS" -e \
+  "CREATE ROLE test WITH PASSWORD = 'choose-a-strong-password' AND LOGIN = true;"
+
+sudo docker exec "$CONTAINER" cqlsh -u cassandra -p "$ADMIN_PASS" -e \
+  "GRANT CREATE ON ALL KEYSPACES TO test;"
+```
+
+Grant only what each app needs. Alternator tables appear in CQL as `alternator_<keyspace>.<table>`.
+
+| Permission | DynamoDB operations |
+|------------|---------------------|
+| `SELECT` | GetItem, Query, Scan, BatchGetItem |
+| `MODIFY` | PutItem, UpdateItem, DeleteItem, BatchWriteItem |
+| `CREATE` | CreateTable |
+| `DROP` | DeleteTable |
+
+### 4. Get the Alternator secret key
+
+```bash
+sudo docker exec "$CONTAINER" cqlsh -u cassandra -p "$ADMIN_PASS" -e \
+  "SELECT role, salted_hash FROM system.roles WHERE role = 'test';"
+```
+
+Copy the `salted_hash` value — that is the AWS `secretAccessKey` for Alternator.
+
+### 5. Verify with AWS CLI
+
+```bash
+export AWS_ACCESS_KEY_ID=test
+export AWS_SECRET_ACCESS_KEY='<salted_hash from step 4>'
+aws dynamodb list-tables --endpoint-url "https://<SCYLLA_HOST>" --region eu-west-1
+```
+
+### 6. Use in Node.js (auth enabled)
+
+```javascript
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+
+export const dynamodb = new DynamoDBClient({
+  region: "eu-west-1",
+  endpoint: "https://dynamodb.example.com",
+  credentials: {
+    accessKeyId: "test",
+    secretAccessKey: "<salted_hash>",
+  },
+});
+```
+
+### Rotate or revoke
+
+```bash
+# Change password (re-fetch salted_hash afterwards)
+sudo docker exec "$CONTAINER" cqlsh -u cassandra -p "$ADMIN_PASS" -e \
+  "ALTER ROLE test WITH PASSWORD = 'new-password';"
+
+# Revoke access
+sudo docker exec "$CONTAINER" cqlsh -u cassandra -p "$ADMIN_PASS" -e \
+  "DROP ROLE test;"
+```
+
+Store passwords and `salted_hash` values in Coolify secrets or a password manager — never commit them to git.
 
 ## Security notes
 
