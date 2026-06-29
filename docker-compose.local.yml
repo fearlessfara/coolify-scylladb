@@ -1,0 +1,11 @@
+# Local dev only: publish Scylla ports to the host. Not used in Coolify deploy.
+services:
+  scylla:
+    ports:
+      - "9042:9042"
+      - "8000:8000"
+    labels: []
+
+  scylla-admin:
+    profiles:
+      - disabled

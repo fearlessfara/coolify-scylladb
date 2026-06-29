@@ -1,3 +1,6 @@
 .env
 local-tests/node_modules/
 local-tests/.env
+admin-ui/node_modules/
+admin-ui/web/dist/
+admin-ui/.env

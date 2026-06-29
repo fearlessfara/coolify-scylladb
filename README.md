@@ -209,6 +209,65 @@ sudo docker exec "$CONTAINER" cqlsh -u cassandra -p "$ADMIN_PASS" -e \
 
 Store passwords and `salted_hash` values in Coolify secrets or a password manager — never commit them to git.
 
+## Admin UI
+
+A self-hosted admin console (`scylla-admin` service) provides a web UI for managing Alternator roles, tables, and item data. It is exposed on a separate HTTPS subdomain via Traefik.
+
+| Component | Details |
+|-----------|---------|
+| Service | `scylla-admin` (built from `admin-ui/`) |
+| Port | `3000` (internal; routed by Traefik) |
+| Auth | Separate UI login (`ADMIN_USERNAME` + `ADMIN_PASSWORD`) |
+| Scylla access | CQL superuser + Alternator via AWS SDK |
+
+### Setup
+
+1. **DNS** — create an **A** (or **AAAA**) record for `ADMIN_UI_HOST` (e.g. `admin.dynamodb.example.com`) pointing to your Coolify server.
+
+2. **Environment variables** in Coolify or `.env`:
+
+   | Variable | Purpose |
+   |----------|---------|
+   | `ADMIN_UI_HOST` | Public hostname for the admin UI |
+   | `ADMIN_USERNAME` | UI login username |
+   | `ADMIN_PASSWORD` | UI login password (plain text; hashed inside the container at startup) |
+
+   You do **not** need to set a CQL password on a fresh install. A one-shot `scylla-bootstrap` service creates the `cassandra` superuser, generates a password, and stores it in the `admin-secrets` Docker volume. The admin UI reads it automatically.
+
+   **Existing cluster** (you already created `cassandra` manually): set `SCYLLA_CQL_PASSWORD` **once** on deploy. Bootstrap saves it to `admin-secrets`; you can remove it from Coolify env on later redeploys.
+
+   Optional advanced settings:
+
+   | Variable | Purpose |
+   |----------|---------|
+   | `ADMIN_PASSWORD_HASH` | Use a pre-generated bcrypt hash instead of `ADMIN_PASSWORD` |
+   | `SCYLLA_CQL_PASSWORD` | One-time import for clusters that already had a `cassandra` password |
+   | `SESSION_SECRET` | Fixed JWT signing secret; auto-generated if omitted (sessions reset on restart) |
+
+3. Redeploy the stack. Bootstrap runs before the admin UI; Alternator API access is wired up automatically from the `cassandra` role.
+
+   To generate a bcrypt hash manually (only if you prefer `ADMIN_PASSWORD_HASH`):
+
+   ```bash
+   cd admin-ui && npm install && npm run hash-password -- 'your-password'
+   ```
+
+### Features
+
+- **Roles & keys** — list, create, rotate password, drop roles; grant presets on `alternator_<table>.<table>`; show `accessKeyId` + `salted_hash` once on create/rotate.
+- **Tables** — list, create (PK/SK/GSI, `PAY_PER_REQUEST`), describe, delete.
+- **Data browser** — paginated scan, query by key, JSON editor for put/edit, delete item.
+
+### Security
+
+> **Important:** The admin UI container holds **CQL superuser access** (auto-provisioned or from `admin-secrets`). Anyone who can log into the UI has full cluster access. Treat `ADMIN_UI_HOST` as a sensitive admin endpoint.
+
+- UI sessions use httpOnly, Secure, SameSite=Strict JWT cookies.
+- Login is rate-limited; Helmet security headers are enabled.
+- CSRF protection via custom `X-Requested-With: ScyllaAdmin` header on state-changing API calls.
+- CQL port `9042` is never exposed publicly — only the admin UI port is routed.
+- **Optional hardening:** add Traefik IP allowlist or basic-auth middleware in front of the `scylla-admin` router if you want defense in depth (e.g. Tailscale-only access).
+
 ## Security notes
 
 - **Authorization is off by default** (`ALTERNATOR_AUTH_ENABLED=false`). Anyone who can reach the HTTPS endpoint can read and write data until you enable auth and configure CQL roles.
@@ -239,8 +298,9 @@ Store passwords and `salted_hash` values in Coolify secrets or a password manage
 
 | File | Purpose |
 |------|---------|
-| `docker-compose.yml` | ScyllaDB service, Traefik labels, data volume |
-| `.env.example` | Template for `SCYLLA_HOST` and auth settings |
+| `docker-compose.yml` | ScyllaDB + admin UI services, Traefik labels, data volume |
+| `.env.example` | Template for hostnames, auth, and admin UI settings |
+| `admin-ui/` | Express API + React admin console (built into `scylla-admin` image) |
 | `README.md` | This document |
 
 ## License

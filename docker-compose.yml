@@ -52,5 +52,57 @@ services:
       - traefik.http.services.scylla-alternator.loadbalancer.healthcheck.scheme=http
       - traefik.http.services.scylla-alternator.loadbalancer.healthcheck.interval=30s
 
+  scylla-bootstrap:
+    image: scylladb/scylla:latest
+    depends_on:
+      scylla:
+        condition: service_healthy
+    volumes:
+      - scylla-data:/var/lib/scylla
+      - admin-secrets:/secrets
+      - ./bootstrap:/bootstrap:ro
+    environment:
+      - SCYLLA_CQL_PASSWORD=${SCYLLA_CQL_PASSWORD:-}
+    entrypoint: ["/bin/bash", "/bootstrap/cql-password.sh"]
+    restart: "no"
+
+  scylla-admin:
+    build: ./admin-ui
+    restart: unless-stopped
+    depends_on:
+      scylla:
+        condition: service_healthy
+      scylla-bootstrap:
+        condition: service_completed_successfully
+    volumes:
+      - admin-secrets:/secrets:ro
+    environment:
+      - SCYLLA_CQL_HOST=scylla
+      - SCYLLA_CQL_PORT=9042
+      - SCYLLA_CQL_USER=cassandra
+      - SCYLLA_CQL_PASSWORD_FILE=/secrets/cql-password
+      - SCYLLA_CQL_PASSWORD=${SCYLLA_CQL_PASSWORD:-}
+      - ALTERNATOR_ENDPOINT=http://scylla:8000
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH:-}
+      - SESSION_SECRET=${SESSION_SECRET:-}
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:3000/healthz >/dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.scylla-admin.rule=Host(`${ADMIN_UI_HOST}`)
+      - traefik.http.routers.scylla-admin.entrypoints=https
+      - traefik.http.routers.scylla-admin.tls=true
+      - traefik.http.routers.scylla-admin.tls.certresolver=letsencrypt
+      - traefik.http.services.scylla-admin.loadbalancer.server.port=3000
+
 volumes:
   scylla-data:
+  admin-secrets:

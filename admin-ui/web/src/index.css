@@ -1,0 +1,743 @@
+:root {
+  /* AWS DynamoDB / Cloudscape palette */
+  --aws-navy: #232f3e;
+  --aws-navy-light: #37475a;
+  --aws-page-bg: #eaeded;
+  --aws-panel: #ffffff;
+  --aws-panel-alt: #fafafa;
+  --aws-border: #d5dbdb;
+  --aws-border-light: #eaeded;
+  --aws-text: #16191f;
+  --aws-text-secondary: #545b64;
+  --aws-text-muted: #687078;
+  --aws-link: #0972d3;
+  --aws-link-hover: #033160;
+  --aws-orange: #ec7211;
+  --aws-orange-hover: #d66c0e;
+  --aws-orange-active: #bd5d0c;
+  --aws-blue: #0073bb;
+  --aws-success-bg: #f2f8f0;
+  --aws-success-border: #b7deb8;
+  --aws-success-text: #1d8102;
+  --aws-error-bg: #fdf3f1;
+  --aws-error-border: #f5c6c0;
+  --aws-error-text: #d13212;
+  --aws-info-bg: #f1faff;
+  --aws-info-border: #99cbe4;
+  --aws-info-text: #0972d3;
+  --aws-warning-bg: #fff9e6;
+  --aws-warning-border: #fbd332;
+  --aws-warning-text: #906806;
+  --radius: 2px;
+  font-family: "Amazon Ember", "Helvetica Neue", Roboto, Arial, sans-serif;
+  color: var(--aws-text);
+  background: var(--aws-page-bg);
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--aws-page-bg);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: var(--aws-link);
+}
+
+/* ── Shell ───────────────────────────────────────── */
+
+.console-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.console-topbar {
+  background: var(--aws-navy);
+  color: #fff;
+  padding: 0 1.25rem;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.console-topbar-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.console-topbar-brand strong {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.console-topbar-brand span {
+  font-size: 0.8125rem;
+  color: #aab7b8;
+  font-weight: 400;
+}
+
+.console-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+  color: #d5dbdb;
+}
+
+.console-topbar-actions button {
+  background: transparent;
+  border: 1px solid #545b64;
+  color: #fff;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+  border-radius: var(--radius);
+}
+
+.console-topbar-actions button:hover:not(:disabled) {
+  background: var(--aws-navy-light);
+  border-color: #879596;
+}
+
+.console-body {
+  flex: 1;
+  padding: 1.25rem 1.5rem 2rem;
+}
+
+.console-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ── Page header ─────────────────────────────────── */
+
+.page-header {
+  margin-bottom: 1rem;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 300;
+  color: var(--aws-text);
+  line-height: 1.2;
+}
+
+.page-header p {
+  margin: 0.35rem 0 0;
+  color: var(--aws-text-secondary);
+  font-size: 0.875rem;
+}
+
+/* ── Tabs (DynamoDB-style underline nav) ─────────── */
+
+.console-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--aws-border);
+  margin-bottom: 1.25rem;
+  background: var(--aws-panel);
+  padding: 0 0.5rem;
+}
+
+.console-tabs button {
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  color: var(--aws-text-secondary);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0;
+}
+
+.console-tabs button:hover:not(.active) {
+  color: var(--aws-link);
+  background: transparent;
+}
+
+.console-tabs button.active {
+  color: var(--aws-orange);
+  border-bottom-color: var(--aws-orange);
+  background: transparent;
+}
+
+/* ── Panels ──────────────────────────────────────── */
+
+.panel {
+  background: var(--aws-panel);
+  border: 1px solid var(--aws-border);
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.panel-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--aws-border-light);
+}
+
+.panel-header h2,
+.panel-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--aws-text);
+}
+
+.panel-header p {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  color: var(--aws-text-secondary);
+}
+
+.panel-body {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.panel-body-flush {
+  padding: 0;
+}
+
+/* ── Buttons ─────────────────────────────────────── */
+
+button {
+  cursor: pointer;
+  border: 1px solid var(--aws-orange);
+  border-radius: var(--radius);
+  padding: 0.4rem 1rem;
+  background: var(--aws-orange);
+  color: #fff;
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+button:hover:not(:disabled) {
+  background: var(--aws-orange-hover);
+  border-color: var(--aws-orange-hover);
+}
+
+button:active:not(:disabled) {
+  background: var(--aws-orange-active);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+button.secondary {
+  background: var(--aws-panel);
+  border-color: var(--aws-border);
+  color: var(--aws-text);
+}
+
+button.secondary:hover:not(:disabled) {
+  background: var(--aws-panel-alt);
+  border-color: #aab7b8;
+}
+
+button.link-btn {
+  background: transparent;
+  border: none;
+  color: var(--aws-link);
+  padding: 0.25rem 0.5rem;
+  font-weight: 400;
+}
+
+button.link-btn:hover:not(:disabled) {
+  color: var(--aws-link-hover);
+  text-decoration: underline;
+  background: transparent;
+}
+
+button.danger {
+  background: var(--aws-panel);
+  border-color: var(--aws-error-text);
+  color: var(--aws-error-text);
+}
+
+button.danger:hover:not(:disabled) {
+  background: var(--aws-error-bg);
+}
+
+button.btn-sm {
+  padding: 0.2rem 0.65rem;
+  font-size: 0.8125rem;
+}
+
+/* ── Form controls ───────────────────────────────── */
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--aws-border);
+  background: var(--aws-panel);
+  color: var(--aws-text);
+  font-size: 0.875rem;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--aws-blue);
+  box-shadow: 0 0 0 1px var(--aws-blue);
+}
+
+label {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--aws-text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.hint {
+  margin: 0;
+  color: var(--aws-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+.row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.row > * {
+  flex: 1;
+  min-width: 160px;
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ── Tables (DynamoDB list style) ────────────────── */
+
+.aws-table-wrap {
+  overflow-x: auto;
+}
+
+table.aws-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.aws-table th,
+.aws-table td {
+  text-align: left;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--aws-border-light);
+  vertical-align: middle;
+}
+
+.aws-table th {
+  background: var(--aws-panel-alt);
+  color: var(--aws-text-secondary);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  border-bottom: 1px solid var(--aws-border);
+  white-space: nowrap;
+}
+
+.aws-table tbody tr:hover {
+  background: #f6f9fc;
+}
+
+.aws-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.aws-table .mono {
+  color: var(--aws-link);
+}
+
+/* legacy table class fallback */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* ── Alerts ──────────────────────────────────────── */
+
+.error,
+.success,
+.notice,
+.info-banner {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  border: 1px solid;
+}
+
+.error {
+  color: var(--aws-error-text);
+  background: var(--aws-error-bg);
+  border-color: var(--aws-error-border);
+}
+
+.success {
+  color: var(--aws-success-text);
+  background: var(--aws-success-bg);
+  border-color: var(--aws-success-border);
+}
+
+.notice {
+  color: var(--aws-text);
+  background: var(--aws-panel-alt);
+  border-color: var(--aws-border);
+}
+
+.info-banner {
+  color: var(--aws-info-text);
+  background: var(--aws-info-bg);
+  border-color: var(--aws-info-border);
+}
+
+.credential-box {
+  background: var(--aws-warning-bg);
+  border-color: var(--aws-warning-border);
+}
+
+.credential-box .success {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+  color: var(--aws-warning-text);
+}
+
+/* ── Badges / status ─────────────────────────────── */
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 2px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid var(--aws-border);
+  background: var(--aws-panel-alt);
+  color: var(--aws-text-secondary);
+}
+
+.badge-yes,
+.badge-active {
+  color: var(--aws-success-text);
+  border-color: var(--aws-success-border);
+  background: var(--aws-success-bg);
+}
+
+.badge-no {
+  color: var(--aws-text-muted);
+}
+
+.badge-warn {
+  color: var(--aws-warning-text);
+  border-color: var(--aws-warning-border);
+  background: var(--aws-warning-bg);
+}
+
+/* ── Data explorer (Explore items style) ─────────── */
+
+.explore-toolbar {
+  background: var(--aws-panel-alt);
+  border: 1px solid var(--aws-border-light);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.explore-toolbar .row {
+  align-items: flex-end;
+}
+
+.item-card {
+  border: 1px solid var(--aws-border-light);
+  border-radius: var(--radius);
+  padding: 0;
+  margin-bottom: 0.5rem;
+  background: var(--aws-panel);
+  overflow: hidden;
+}
+
+.item-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.85rem;
+  background: var(--aws-panel-alt);
+  border-bottom: 1px solid var(--aws-border-light);
+  font-size: 0.8125rem;
+}
+
+.item-card-body {
+  padding: 0.75rem 0.85rem;
+}
+
+.item-key {
+  margin: 0;
+  color: var(--aws-text-secondary);
+}
+
+.item-key strong {
+  color: var(--aws-text);
+}
+
+.mono {
+  font-family: "Roboto Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 0.8125rem;
+  word-break: break-all;
+}
+
+/* ── Schema blocks ───────────────────────────────── */
+
+.schema-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--aws-border-light);
+}
+
+.schema-block h4 {
+  margin: 0 0 0.25rem;
+  font-size: 0.75rem;
+  color: var(--aws-text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.schema-block p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--aws-text);
+}
+
+/* ── Misc ────────────────────────────────────────── */
+
+.credential-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  background: var(--aws-panel);
+  border: 1px solid var(--aws-border-light);
+  border-radius: var(--radius);
+}
+
+.empty {
+  color: var(--aws-text-muted);
+  font-size: 0.875rem;
+  margin: 0;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.inline-form {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--aws-border);
+}
+
+.inline-form .field {
+  margin: 0;
+  min-width: 200px;
+}
+
+.loading-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: var(--aws-text-secondary);
+  background: var(--aws-page-bg);
+}
+
+/* ── Login (AWS sign-in inspired) ────────────────── */
+
+.login-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--aws-page-bg);
+}
+
+.login-topbar {
+  background: var(--aws-navy);
+  padding: 0.85rem 1.5rem;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.login-wrap {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+}
+
+.login-card {
+  width: min(400px, 100%);
+  background: var(--aws-panel);
+  border: 1px solid var(--aws-border);
+  border-radius: var(--radius);
+  padding: 1.75rem 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.login-card h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: var(--aws-text);
+}
+
+.login-card .hint {
+  margin-bottom: 1.25rem;
+}
+
+.login-card button[type="submit"] {
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.55rem;
+}
+
+pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--aws-panel-alt);
+  border: 1px solid var(--aws-border-light);
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  font-size: 0.8125rem;
+}
+
+details.raw-json {
+  margin-top: 1rem;
+}
+
+details.raw-json summary {
+  cursor: pointer;
+  color: var(--aws-link);
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+/* legacy class aliases — keep components working */
+.card {
+  background: var(--aws-panel);
+  border: 1px solid var(--aws-border);
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.card-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--aws-text);
+}
+
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--aws-border);
+  margin-bottom: 1.25rem;
+  background: var(--aws-panel);
+  padding: 0 0.5rem;
+}
+
+.tabs button {
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  color: var(--aws-text-secondary);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0;
+}
+
+.tabs button:hover:not(.active) {
+  color: var(--aws-link);
+  background: transparent;
+}
+
+.tabs button.active {
+  color: var(--aws-orange);
+  border-bottom-color: var(--aws-orange);
+  background: transparent;
+}
+
+.layout {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 1rem;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 300;
+  color: var(--aws-text);
+}
+
+.header-sub {
+  margin: 0.35rem 0 0;
+  color: var(--aws-text-secondary);
+  font-size: 0.875rem;
+}
