@@ -17,44 +17,45 @@ Alternator is exposed over **HTTPS** through Coolify's built-in Traefik reverse 
 
 ## Quick start
 
-1. Copy the example environment file:
+1. Copy the example environment file (for local reference; on Coolify use the **Environment Variables** panel):
 
    ```bash
    cp .env.example .env
    ```
 
-2. Set `SCYLLA_HOST` to your public hostname (e.g. `dynamodb.example.com`).
+2. Deploy in Coolify as a **Docker Compose** resource.
 
-3. Optionally configure Alternator auth in `.env` (see [Authentication](#authentication) below).
+3. In Coolify, open each service and assign domains in the **configuration / domains** panel (see [Coolify domain setup](#coolify-domain-setup) below). Do **not** set `SCYLLA_HOST` or `ADMIN_UI_HOST` in the env vars page.
 
-4. Deploy in Coolify as a **Docker Compose** resource, or run locally:
-
-   ```bash
-   docker compose up -d
-   ```
+4. Optionally configure Alternator auth in the env panel (see [Authentication](#authentication) below).
 
 ## Coolify domain setup
 
-1. **Create a Docker Compose resource** in Coolify and point it at this repository (or paste `docker-compose.yml`).
+Domains are configured **per service in the Coolify UI**, not via `SCYLLA_HOST` / `ADMIN_UI_HOST` env vars. Coolify injects `SERVICE_FQDN_*` variables and Traefik labels automatically.
 
-2. **Set environment variables** in the Coolify UI (or via `.env`):
-   - `SCYLLA_HOST` — must match the hostname clients use (e.g. `dynamodb.example.com`).
-   - `ALTERNATOR_AUTH_ENABLED` — `false` by default; set `true` to enforce auth.
-   - `ALTERNATOR_AUTH_WARN` — `false` by default; set `true` to log would-be auth failures.
+1. **Create a Docker Compose resource** in Coolify and point it at this repository.
 
-3. **DNS** — create an **A** (or **AAAA**) record for `SCYLLA_HOST` pointing to your Coolify server's public IP.
+2. **Assign domains** in the Coolify service configuration panel:
 
-4. **Traefik** — Coolify's proxy reads the labels in `docker-compose.yml`:
-   - Router: `scylla-alternator`
-   - Entrypoint: `https`
-   - Certificate resolver: `letsencrypt`
-   - Backend port: `8000`
+   | Service | Port | Purpose |
+   |---------|------|---------|
+   | `scylla` | `8000` | Alternator (DynamoDB API) — e.g. `dynamodb.example.com` |
+   | `scylla-admin` | `3000` | Admin console — e.g. `admin.dynamodb.example.com` or a Coolify auto `sslip.io` URL |
 
-5. After DNS propagates and the stack is healthy, Alternator is reachable at:
+   For custom domains, create a DNS **A** / **AAAA** record pointing at your Coolify server. Coolify provisions HTTPS (Let's Encrypt) when you use a real domain.
 
-   ```
-   https://<SCYLLA_HOST>/
-   ```
+   Auto-generated `sslip.io` URLs work over **HTTP**; use the `http://` link Coolify shows unless you assign a custom domain with TLS.
+
+3. **Environment variables** (Coolify **Variables** panel — not domains):
+
+   | Variable | Purpose |
+   |----------|---------|
+   | `ALTERNATOR_AUTH_ENABLED` | `false` by default; set `true` to enforce auth |
+   | `ALTERNATOR_AUTH_WARN` | `false` by default; set `true` to log would-be auth failures |
+   | `ADMIN_USERNAME` | Admin UI login username |
+   | `ADMIN_PASSWORD` | Admin UI login password |
+
+4. After DNS propagates and the stack is healthy, Alternator is at the URL Coolify shows for the `scylla` service (`SERVICE_URL_SCYLLA`).
 
 The compose file includes a Docker health check (`GET http://127.0.0.1:8000/`) so Coolify and Traefik wait until Alternator is ready. Alternator is started with `--alternator-address 0.0.0.0` so it listens on localhost inside the container (required for the health check).
 
@@ -81,7 +82,7 @@ export const dynamodb = new DynamoDBClient({
 });
 ```
 
-Replace `https://dynamodb.example.com` with `https://<SCYLLA_HOST>`.
+Replace `https://dynamodb.example.com` with your Alternator URL from Coolify (`SERVICE_URL_SCYLLA` / the domain assigned to the `scylla` service).
 
 Other AWS SDKs (Python `boto3`, Go, Java, etc.) work the same way: set a custom `endpoint` and use dummy credentials unless you enable Alternator authorization.
 
@@ -177,8 +178,10 @@ Copy the `salted_hash` value — that is the AWS `secretAccessKey` for Alternato
 ```bash
 export AWS_ACCESS_KEY_ID=test
 export AWS_SECRET_ACCESS_KEY='<salted_hash from step 4>'
-aws dynamodb list-tables --endpoint-url "https://<SCYLLA_HOST>" --region eu-west-1
+aws dynamodb list-tables --endpoint-url "https://dynamodb.example.com" --region eu-west-1
 ```
+
+Use the hostname from Coolify's `scylla` service domain.
 
 ### 6. Use in Node.js (auth enabled)
 
@@ -222,9 +225,9 @@ A self-hosted admin console (`scylla-admin` service) provides a web UI for manag
 
 ### Setup
 
-1. **Domain in Coolify** — open the `scylla-admin` service in Coolify and assign a domain (Coolify generates the Traefik labels automatically). The auto-generated `sslip.io` URL works over **HTTP**; use the `http://` link Coolify shows, or assign a custom domain (e.g. `admin.dynamodb.example.com`) with DNS pointing at your server for HTTPS + Let's Encrypt.
+1. **Domain in Coolify** — assign a domain to the `scylla-admin` service in the Coolify configuration panel (same as Alternator — not an env var). Use a custom domain for HTTPS, or the auto `sslip.io` URL over HTTP.
 
-2. **Environment variables** in Coolify or `.env`:
+2. **Environment variables** in Coolify (Variables panel only):
 
    | Variable | Purpose |
    |----------|---------|

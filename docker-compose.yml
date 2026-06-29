@@ -1,5 +1,6 @@
 # ScyllaDB with Alternator (DynamoDB-compatible API) for Coolify + Traefik.
-# Set SCYLLA_HOST in .env to your public hostname before deploying.
+# Domains: assign in the Coolify UI per service (not env vars). Coolify injects
+# SERVICE_FQDN_SCYLLA / SERVICE_FQDN_SCYLLA_ADMIN and Traefik labels automatically.
 
 services:
   scylla:
@@ -40,17 +41,8 @@ services:
       timeout: 10s
       retries: 5
       start_period: 120s
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.scylla-alternator.rule=Host(`${SCYLLA_HOST}`)
-      - traefik.http.routers.scylla-alternator.entrypoints=https
-      - traefik.http.routers.scylla-alternator.tls=true
-      - traefik.http.routers.scylla-alternator.tls.certresolver=letsencrypt
-      - traefik.http.services.scylla-alternator.loadbalancer.server.port=8000
-      - traefik.http.services.scylla-alternator.loadbalancer.healthcheck.path=/
-      - traefik.http.services.scylla-alternator.loadbalancer.healthcheck.port=8000
-      - traefik.http.services.scylla-alternator.loadbalancer.healthcheck.scheme=http
-      - traefik.http.services.scylla-alternator.loadbalancer.healthcheck.interval=30s
+    # Routing: assign a domain to the `scylla` service in Coolify (port 8000).
+    # Coolify generates Traefik labels; do not set SCYLLA_HOST in the env panel.
 
   scylla-bootstrap:
     build: ./bootstrap
@@ -97,15 +89,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    # Routing: assign the admin UI domain in Coolify (Generates Traefik labels).
-    # For self-managed compose only, uncomment and set ADMIN_UI_HOST in .env:
-    # labels:
-    #   - traefik.enable=true
-    #   - traefik.http.routers.scylla-admin.rule=Host(`${ADMIN_UI_HOST}`)
-    #   - traefik.http.routers.scylla-admin.entrypoints=https
-    #   - traefik.http.routers.scylla-admin.tls=true
-    #   - traefik.http.routers.scylla-admin.tls.certresolver=letsencrypt
-    #   - traefik.http.services.scylla-admin.loadbalancer.server.port=3000
+    # Routing: assign a domain to the `scylla-admin` service in Coolify (port 3000).
 
 volumes:
   scylla-data:
