@@ -1,12 +1,23 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
 import { userTables } from "../utils.js";
+import ItemEditor from "./ItemEditor.jsx";
+import ItemsResultTable from "./ItemsResultTable.jsx";
+import QueryMetrics from "./QueryMetrics.jsx";
 
-function itemKeyLabel(item, keySchema) {
-  if (!keySchema?.length) return JSON.stringify(item);
-  return keySchema
-    .map((k) => `${k.AttributeName}=${JSON.stringify(item[k.AttributeName])}`)
-    .join(", ");
+function mergeMetrics(previous, current) {
+  if (!previous) return current;
+  const prevUnits = previous.consumedCapacity?.CapacityUnits ?? 0;
+  const currUnits = current.consumedCapacity?.CapacityUnits ?? 0;
+  const hasCapacity = previous.consumedCapacity || current.consumedCapacity;
+  return {
+    count: previous.count + current.count,
+    scannedCount: previous.scannedCount + current.scannedCount,
+    consumedCapacity: hasCapacity
+      ? { CapacityUnits: prevUnits + currUnits }
+      : null,
+    elapsedMs: previous.elapsedMs + current.elapsedMs,
+  };
 }
 
 export default function DataBrowser() {
@@ -16,6 +27,7 @@ export default function DataBrowser() {
   const [mode, setMode] = useState("scan");
   const [items, setItems] = useState([]);
   const [lastKey, setLastKey] = useState(null);
+  const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [query, setQuery] = useState({
@@ -24,7 +36,7 @@ export default function DataBrowser() {
     sortKey: "",
     sortValue: "",
   });
-  const [editor, setEditor] = useState({ open: false, text: "", item: null });
+  const [editor, setEditor] = useState({ open: false, item: null, isNew: false });
 
   useEffect(() => {
     api.tables
@@ -61,8 +73,11 @@ export default function DataBrowser() {
       const params = { limit: "25" };
       if (startKey) params.startKey = JSON.stringify(startKey);
       const data = await api.data.scan(table, params);
-      setItems(startKey ? [...items, ...data.items] : data.items);
+      setItems((prev) => (startKey ? [...prev, ...data.items] : data.items));
       setLastKey(data.lastEvaluatedKey);
+      setMetrics((prev) =>
+        startKey ? mergeMetrics(prev, data.metrics) : data.metrics ?? null
+      );
     } catch (err) {
       setError(err.message);
     } finally {
@@ -86,8 +101,11 @@ export default function DataBrowser() {
       }
       if (startKey) params.startKey = JSON.stringify(startKey);
       const data = await api.data.query(table, params);
-      setItems(startKey ? [...items, ...data.items] : data.items);
+      setItems((prev) => (startKey ? [...prev, ...data.items] : data.items));
       setLastKey(data.lastEvaluatedKey);
+      setMetrics((prev) =>
+        startKey ? mergeMetrics(prev, data.metrics) : data.metrics ?? null
+      );
     } catch (err) {
       setError(err.message);
     } finally {
@@ -101,11 +119,7 @@ export default function DataBrowser() {
   }
 
   function openEditor(item) {
-    setEditor({
-      open: true,
-      text: JSON.stringify(item, null, 2),
-      item,
-    });
+    setEditor({ open: true, item, isNew: false });
   }
 
   function openNewEditor() {
@@ -113,19 +127,14 @@ export default function DataBrowser() {
     for (const k of keySchema) {
       template[k.AttributeName] = "";
     }
-    setEditor({
-      open: true,
-      text: JSON.stringify(template, null, 2),
-      item: null,
-    });
+    setEditor({ open: true, item: template, isNew: true });
   }
 
-  async function saveEditor() {
+  async function saveEditor(item) {
     setError("");
     try {
-      const item = JSON.parse(editor.text);
       await api.data.putItem(table, item);
-      setEditor({ open: false, text: "", item: null });
+      setEditor({ open: false, item: null, isNew: false });
       if (mode === "scan") await runScan();
       else await runQuery();
     } catch (err) {
@@ -172,6 +181,7 @@ export default function DataBrowser() {
                     setTable(e.target.value);
                     setItems([]);
                     setLastKey(null);
+                    setMetrics(null);
                   }}
                 >
                   <option value="">Select a table</option>
@@ -262,37 +272,19 @@ export default function DataBrowser() {
                 Create item
               </button>
             </div>
+            <QueryMetrics metrics={metrics} mode={mode} />
           </div>
         </div>
       </div>
 
       {editor.open && (
-        <div className="panel">
-          <div className="panel-header">
-            <h3>{editor.item ? "Edit item" : "Create item"}</h3>
-            <p>Item attributes as JSON (DynamoDB document format).</p>
-          </div>
-          <div className="panel-body">
-            <textarea
-              rows={14}
-              value={editor.text}
-              onChange={(e) => setEditor({ ...editor, text: e.target.value })}
-              className="mono"
-            />
-            <div className="row-actions" style={{ marginTop: "0.75rem" }}>
-              <button type="button" onClick={saveEditor}>
-                Save item
-              </button>
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => setEditor({ open: false, text: "", item: null })}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <ItemEditor
+          item={editor.item}
+          keySchema={keySchema}
+          title={editor.isNew ? "Create item" : "Edit item"}
+          onSave={saveEditor}
+          onCancel={() => setEditor({ open: false, item: null, isNew: false })}
+        />
       )}
 
       <div className="panel panel-body-flush">
@@ -309,46 +301,24 @@ export default function DataBrowser() {
               : "No items to display. Run a scan or query."}
           </p>
         ) : (
-          <div className="panel-body" style={{ paddingTop: 0 }}>
-            {items.map((item, i) => (
-              <div key={i} className="item-card">
-                <div className="item-card-header">
-                  <p className="item-key mono">
-                    <strong>Primary key:</strong>{" "}
-                    {itemKeyLabel(item, keySchema)}
-                  </p>
-                  <div className="row-actions">
-                    <button
-                      type="button"
-                      className="btn-sm link-btn"
-                      onClick={() => openEditor(item)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-sm danger"
-                      onClick={() => deleteItem(item)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-                <div className="item-card-body">
-                  <pre className="mono">{JSON.stringify(item, null, 2)}</pre>
-                </div>
-              </div>
-            ))}
+          <div className="panel-body panel-body-flush">
+            <ItemsResultTable
+              items={items}
+              keySchema={keySchema}
+              onEdit={openEditor}
+              onDelete={deleteItem}
+            />
             {lastKey && (
-              <button
-                type="button"
-                className="secondary"
-                style={{ marginTop: "0.5rem" }}
-                onClick={() => runLoad(lastKey)}
-                disabled={loading}
-              >
-                Load more results
-              </button>
+              <div className="dynamo-items-footer">
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => runLoad(lastKey)}
+                  disabled={loading}
+                >
+                  Load more results
+                </button>
+              </div>
             )}
           </div>
         )}

@@ -12,23 +12,51 @@ import { requireAuth } from "../middleware/auth.js";
 const router = Router();
 router.use(requireAuth);
 
+function reviveDynamoValue(value) {
+  if (value && typeof value === "object" && Array.isArray(value.__dynamoSet)) {
+    return new Set(value.__dynamoSet);
+  }
+  if (Array.isArray(value)) {
+    return value.map(reviveDynamoValue);
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [k, reviveDynamoValue(v)])
+    );
+  }
+  return value;
+}
+
+function operationMetrics(result, elapsedMs) {
+  return {
+    count: result.Count ?? 0,
+    scannedCount: result.ScannedCount ?? result.Count ?? 0,
+    consumedCapacity: result.ConsumedCapacity ?? null,
+    elapsedMs,
+  };
+}
+
 router.get("/:table/scan", async (req, res, next) => {
   try {
     const { table } = req.params;
     const limit = Math.min(Number(req.query.limit) || 25, 100);
+    const started = Date.now();
     const result = await getDoc().send(
       new ScanCommand({
         TableName: table,
         Limit: limit,
+        ReturnConsumedCapacity: "TOTAL",
         ExclusiveStartKey: req.query.startKey
           ? JSON.parse(req.query.startKey)
           : undefined,
       })
     );
+    const metrics = operationMetrics(result, Date.now() - started);
     res.json({
       items: result.Items ?? [],
       lastEvaluatedKey: result.LastEvaluatedKey ?? null,
-      count: result.Count ?? 0,
+      count: metrics.count,
+      metrics,
     });
   } catch (err) {
     next(err);
@@ -57,6 +85,7 @@ router.get("/:table/query", async (req, res, next) => {
       values[":sk"] = sortValue;
     }
 
+    const started = Date.now();
     const result = await getDoc().send(
       new QueryCommand({
         TableName: table,
@@ -64,16 +93,19 @@ router.get("/:table/query", async (req, res, next) => {
         ExpressionAttributeNames: names,
         ExpressionAttributeValues: values,
         Limit: Math.min(Number(limit) || 25, 100),
+        ReturnConsumedCapacity: "TOTAL",
         ExclusiveStartKey: req.query.startKey
           ? JSON.parse(req.query.startKey)
           : undefined,
       })
     );
 
+    const metrics = operationMetrics(result, Date.now() - started);
     res.json({
       items: result.Items ?? [],
       lastEvaluatedKey: result.LastEvaluatedKey ?? null,
-      count: result.Count ?? 0,
+      count: metrics.count,
+      metrics,
     });
   } catch (err) {
     next(err);
@@ -100,7 +132,9 @@ router.put("/:table/item", async (req, res, next) => {
     if (!item || typeof item !== "object") {
       return res.status(400).json({ error: "item object is required" });
     }
-    await getDoc().send(new PutCommand({ TableName: table, Item: item }));
+    await getDoc().send(
+      new PutCommand({ TableName: table, Item: reviveDynamoValue(item) })
+    );
     res.json({ ok: true });
   } catch (err) {
     next(err);

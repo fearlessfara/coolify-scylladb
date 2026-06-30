@@ -513,6 +513,284 @@ table {
   padding: 0.75rem 0.85rem;
 }
 
+.item-card-body-flush {
+  padding: 0;
+}
+
+/* ── DynamoDB item attribute editor ──────────────── */
+
+.dynamo-item-editor .dynamo-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.dynamo-view-toggle {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.dynamo-view-toggle button {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.dynamo-view-toggle button.active {
+  background: var(--aws-navy);
+  border-color: var(--aws-navy);
+}
+
+.dynamo-view-toggle button.active:hover:not(:disabled) {
+  background: var(--aws-navy-light);
+  border-color: var(--aws-navy-light);
+}
+
+.dynamo-attr-block {
+  border: 1px solid var(--aws-border);
+  border-radius: var(--radius);
+  background: var(--aws-panel);
+}
+
+.dynamo-attr-block.depth-1,
+.dynamo-attr-block.depth-2,
+.dynamo-attr-block.depth-3 {
+  margin: 0;
+  border: none;
+  border-left: 3px solid var(--aws-border-light);
+  border-radius: 0;
+  background: var(--aws-panel-alt);
+}
+
+.dynamo-attr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.dynamo-attr-table th {
+  background: var(--aws-panel-alt);
+  color: var(--aws-text-secondary);
+  font-weight: 700;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--aws-border);
+  white-space: nowrap;
+}
+
+.dynamo-attr-table td {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--aws-border-light);
+  vertical-align: middle;
+}
+
+.dynamo-attr-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.dynamo-attr-table .col-name {
+  width: 28%;
+  min-width: 140px;
+}
+
+.dynamo-attr-table .col-type {
+  width: 18%;
+  min-width: 120px;
+}
+
+.dynamo-attr-table .col-value {
+  width: auto;
+}
+
+.dynamo-attr-table .col-actions {
+  width: 2.5rem;
+  text-align: center;
+}
+
+.dynamo-attr-table input,
+.dynamo-attr-table select {
+  width: 100%;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.8125rem;
+}
+
+.dynamo-nested-row .dynamo-nested-cell {
+  padding: 0 0 0.5rem 1.25rem;
+  background: var(--aws-panel-alt);
+  border-bottom: 1px solid var(--aws-border-light);
+}
+
+.dynamo-empty-row {
+  color: var(--aws-text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 1rem !important;
+}
+
+.dynamo-add-link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--aws-border-light);
+  color: var(--aws-link);
+  padding: 0.55rem 0.75rem;
+  font-weight: 400;
+  border-radius: 0;
+}
+
+.dynamo-add-link:hover:not(:disabled) {
+  background: #f6f9fc;
+  color: var(--aws-link-hover);
+  text-decoration: underline;
+}
+
+.dynamo-remove-btn {
+  background: transparent;
+  border: none;
+  color: var(--aws-text-muted);
+  padding: 0.15rem 0.35rem;
+  font-size: 0.875rem;
+  line-height: 1;
+  border-radius: var(--radius);
+}
+
+.dynamo-remove-btn:hover:not(:disabled) {
+  background: var(--aws-error-bg);
+  color: var(--aws-error-text);
+}
+
+.dynamo-null-value {
+  color: var(--aws-text-muted);
+  font-style: italic;
+}
+
+.dynamo-complex-hint,
+.dynamo-complex-summary {
+  color: var(--aws-text-muted);
+  font-size: 0.8125rem;
+}
+
+.dynamo-index {
+  color: var(--aws-text-secondary);
+}
+
+.dynamo-type-badge {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  background: var(--aws-panel-alt);
+  border: 1px solid var(--aws-border-light);
+  border-radius: 2px;
+  font-size: 0.75rem;
+  color: var(--aws-text-secondary);
+}
+
+.dynamo-attr-readonly .col-value {
+  color: var(--aws-text);
+}
+
+.dynamo-nested-readonly {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dynamo-list-entry {
+  padding-left: 0.5rem;
+  border-left: 2px solid var(--aws-border-light);
+}
+
+.dynamo-json-textarea {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.dynamo-item-view .dynamo-attr-table th,
+.dynamo-item-view .dynamo-attr-table td {
+  padding: 0.45rem 0.75rem;
+}
+
+/* ── DynamoDB scan results (items as rows) ───────── */
+
+.dynamo-items-table-wrap {
+  border-top: 1px solid var(--aws-border-light);
+}
+
+.dynamo-items-table th {
+  color: var(--aws-link);
+  font-weight: 700;
+}
+
+.dynamo-items-table td {
+  max-width: 280px;
+  word-break: break-word;
+  vertical-align: top;
+}
+
+.dynamo-items-actions-col {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.dynamo-cell-empty {
+  color: var(--aws-text-muted);
+}
+
+.dynamo-cell-complex {
+  color: var(--aws-text-secondary);
+}
+
+.dynamo-items-footer {
+  padding: 0.75rem 1.25rem 1.25rem;
+  border-top: 1px solid var(--aws-border-light);
+}
+
+/* ── Query / scan metrics (DynamoDB explore bar) ─── */
+
+.query-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 1rem;
+  margin-top: 0.85rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--aws-success-bg);
+  border: 1px solid var(--aws-success-border);
+  border-radius: var(--radius);
+  font-size: 0.8125rem;
+  color: var(--aws-text-secondary);
+}
+
+.query-metrics-status {
+  color: var(--aws-success-text);
+  font-weight: 700;
+}
+
+.query-metrics-status::after {
+  content: "·";
+  margin-left: 1rem;
+  color: var(--aws-text-muted);
+  font-weight: 400;
+}
+
+.query-metrics-item strong {
+  color: var(--aws-text);
+  font-weight: 700;
+}
+
+.query-metrics-muted strong {
+  color: var(--aws-text-muted);
+  font-weight: 400;
+}
+
+.query-metrics-hint {
+  color: var(--aws-text-muted);
+  font-size: 0.75rem;
+}
+
 .item-key {
   margin: 0;
   color: var(--aws-text-secondary);

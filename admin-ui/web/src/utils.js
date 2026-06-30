@@ -28,3 +28,11 @@ export function gsiRows(table) {
     projection: gsi.Projection?.ProjectionType ?? "—",
   }));
 }
+
+/** DynamoDB-style capacity display (whole or half units). */
+export function formatCapacityUnits(units) {
+  if (units === undefined || units === null) return "—";
+  const n = Number(units);
+  if (Number.isNaN(n)) return String(units);
+  return Number.isInteger(n) ? String(n) : n.toFixed(2);
+}

@@ -3,6 +3,21 @@ const headers = {
   "X-Requested-With": "ScyllaAdmin",
 };
 
+function serializeDynamoValue(value) {
+  if (value instanceof Set) {
+    return { __dynamoSet: [...value] };
+  }
+  if (Array.isArray(value)) {
+    return value.map(serializeDynamoValue);
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [k, serializeDynamoValue(v)])
+    );
+  }
+  return value;
+}
+
 async function request(path, options = {}) {
   const res = await fetch(path, {
     credentials: "include",
@@ -69,7 +84,7 @@ export const api = {
     putItem: (table, item) =>
       request(`/api/data/${encodeURIComponent(table)}/item`, {
         method: "PUT",
-        body: JSON.stringify({ item }),
+        body: JSON.stringify({ item: serializeDynamoValue(item) }),
       }),
     deleteItem: (table, key) =>
       request(`/api/data/${encodeURIComponent(table)}/item`, {
